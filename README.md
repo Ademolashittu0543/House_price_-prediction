@@ -22,4 +22,4 @@ The dataset contains information about houses, including price, number of bedroo
 
 ## Next Steps  
 - Improve model accuracy with feature scaling  
-- Deploy the model using Flask or Streamlit  
+  
