@@ -1,33 +1,63 @@
 import streamlit as st
+import pandas as pd
 import pickle
-import numpy as np
 
 # Load the trained model
-model = pickle.load(open('model.pkl', 'rb'))
+try:
+    model = pickle.load(open('modell.pkl', 'rb'))
+except Exception as e:
+    st.error(f"Failed to load model: {e}")
+    st.stop()
 
-# Input Fields
-city_encoded = st.number_input("City (Encoded)", min_value=0, step=1)
-house_age = st.number_input("House Age (years)", min_value=0, step=1)
-sqft_living = st.number_input("Living Area (sqft)", min_value=100, step=10)
-sqft_lot = st.number_input("Lot Area (sqft)", min_value=500, step=10)
-bedrooms = st.number_input("Bedrooms", min_value=1, step=1)
-bathrooms = st.number_input("Bathrooms", min_value=1.0, step=0.5)
-floors = st.number_input("Floors", min_value=1, step=1)
-waterfront = st.selectbox("Waterfront View", [0, 1])
-view = st.number_input("View Rating", min_value=0, step=1)
-condition = st.number_input("Condition Rating", min_value=1, step=1)
-sqft_basement = st.number_input("Basement Area (sqft)", min_value=0, step=10)
+st.title("🏡 House Price Prediction App")
+st.write("Fill in the details below to estimate the house price.")
 
+# Input fields
+bedrooms = st.slider("Number of Bedrooms", 0, 10, 3)
+bathrooms = st.slider("Number of Bathrooms", 0.0, 5.0, 2.0, step=0.25)
+sqft_living = st.number_input("Living Area (sqft)", min_value=100, value=1500)
+sqft_lot = st.number_input("Lot Size (sqft)", min_value=500, value=3000)
+floors = st.slider("Number of Floors", 1, 3, 1)
+waterfront = st.selectbox("Waterfront View?", [0, 1])
+view = st.slider("View Rating", 0, 4, 0)
+condition = st.slider("Condition Rating", 1, 5, 3)
+grade = st.slider("Grade Rating", 1, 13, 7)
+sqft_above = st.number_input("Square Feet Above", min_value=100, value=1200)
+sqft_basement = st.number_input("Square Feet Basement", min_value=0, value=300)
+house_age = st.slider("House Age", 0, 120, 20)
+city = st.selectbox("City", [
+    'Shoreline', 'Seattle', 'Kent', 'Bellevue', 'Redmond', 'Maple Valley',
+    'North Bend', 'Lake Forest Park', 'Sammamish', 'Auburn', 'Des Moines',
+    'Bothell', 'Federal Way', 'Kirkland', 'Issaquah', 'Woodinville',
+    'Normandy Park', 'Fall City', 'Renton', 'Carnation', 'Snoqualmie',
+    'Duvall', 'Burien', 'Covington', 'Inglewood-Finn Hill', 'Kenmore',
+    'Newcastle', 'Mercer Island', 'Black Diamond', 'Ravensdale', 'Clyde Hill',
+    'Algona', 'Skykomish', 'Tukwila', 'Vashon', 'Yarrow Point', 'SeaTac',
+    'Medina', 'Enumclaw', 'Snoqualmie Pass', 'Pacific', 'Beaux Arts Village',
+    'Preston', 'Milton'
+])
+
+# Combine features (including raw 'city' column)
+input_data = pd.DataFrame([{
+    'bedrooms': bedrooms,
+    'bathrooms': bathrooms,
+    'sqft_living': sqft_living,
+    'sqft_lot': sqft_lot,
+    'floors': floors,
+    'waterfront': waterfront,
+    'view': view,
+    'condition': condition,
+    'grade': grade,
+    'sqft_above': sqft_above,
+    'sqft_basement': sqft_basement,
+    'house_age': house_age,
+    'city': city  # pass city as-is, do not one-hot encode
+}])
 
 # Prediction
 if st.button("Predict Price"):
-    # Convert inputs into a NumPy array
-    input_features = np.array([[city_encoded, house_age, sqft_living, sqft_lot, bedrooms,
-                                bathrooms, floors, waterfront, view, condition,
-                                sqft_basement]])
-    
-    # Make prediction
-    predicted_price = model.predict(input_features)[0]
-
-    # Display Result
-    st.success(f"🏠 Estimated House Price: **${predicted_price:,.2f}**")
+    try:
+        prediction = model.predict(input_data)[0]
+        st.success(f"Estimated House Price: ${prediction:,.2f}")
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
